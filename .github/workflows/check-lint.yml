@@ -151,7 +151,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Install cargo shear"
-        uses: taiki-e/install-action@542cebaaed782771e619bd5609d97659d109c492 # v2.66.7
+        uses: taiki-e/install-action@650c5ca14212efbbf3e580844b04bdccf68dac31 # v2.67.18
         with:
           tool: cargo-shear
       - run: cargo shear
