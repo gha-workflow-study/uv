@@ -197,7 +197,8 @@ async fn run(mut cli: Cli) -> Result<ExitStatus> {
                 settings.network_settings.native_tls,
                 settings.network_settings.allow_insecure_host,
                 settings.preview,
-                settings.network_settings.timeout,
+                settings.network_settings.read_timeout,
+                settings.network_settings.connect_timeout,
                 settings.network_settings.retries,
             )
             .http_proxy(settings.network_settings.http_proxy)
@@ -484,7 +485,8 @@ async fn run(mut cli: Cli) -> Result<ExitStatus> {
         globals.network_settings.native_tls,
         globals.network_settings.allow_insecure_host.clone(),
         globals.preview,
-        globals.network_settings.timeout,
+        globals.network_settings.read_timeout,
+        globals.network_settings.connect_timeout,
         globals.network_settings.retries,
     )
     .http_proxy(globals.network_settings.http_proxy.clone())
@@ -1247,7 +1249,11 @@ async fn run(mut cli: Cli) -> Result<ExitStatus> {
                 args.no_project,
                 &cache,
                 printer,
-                args.relocatable,
+                args.relocatable
+                    || (globals
+                        .preview
+                        .is_enabled(PreviewFeature::RelocatableEnvsDefault)
+                        && !args.no_relocatable),
                 globals.preview,
             )
             .await
@@ -1537,6 +1543,7 @@ async fn run(mut cli: Cli) -> Result<ExitStatus> {
                 globals.python_downloads,
                 globals.installer_metadata,
                 globals.concurrency,
+                cli.top_level.no_config,
                 cache,
                 printer,
                 globals.preview,
@@ -1726,14 +1733,7 @@ async fn run(mut cli: Cli) -> Result<ExitStatus> {
             let args = settings::PythonUninstallSettings::resolve(args, filesystem);
             show_settings!(args);
 
-            commands::python_uninstall(
-                args.install_dir,
-                args.targets,
-                args.all,
-                printer,
-                globals.preview,
-            )
-            .await
+            commands::python_uninstall(args.install_dir, args.targets, args.all, printer).await
         }
         Commands::Python(PythonNamespace {
             command: PythonCommand::Find(args),
@@ -1748,6 +1748,7 @@ async fn run(mut cli: Cli) -> Result<ExitStatus> {
                 commands::python_find_script(
                     (&script).into(),
                     args.show_version,
+                    args.resolve_links,
                     // TODO(zsol): is this the right thing to do here?
                     &client_builder.subcommand(vec!["python".to_owned(), "find".to_owned()]),
                     globals.python_preference,
@@ -1763,6 +1764,7 @@ async fn run(mut cli: Cli) -> Result<ExitStatus> {
                     &project_dir,
                     args.request,
                     args.show_version,
+                    args.resolve_links,
                     args.no_project,
                     cli.top_level.no_config,
                     args.system,
@@ -1872,12 +1874,8 @@ async fn run(mut cli: Cli) -> Result<ExitStatus> {
             WorkspaceCommand::Metadata(_args) => {
                 commands::metadata(&project_dir, globals.preview, printer).await
             }
-            WorkspaceCommand::Dir(args) => {
-                commands::dir(args.package, &project_dir, globals.preview, printer).await
-            }
-            WorkspaceCommand::List(args) => {
-                commands::list(&project_dir, args.paths, globals.preview, printer).await
-            }
+            WorkspaceCommand::Dir(args) => commands::dir(args.package, &project_dir, printer).await,
+            WorkspaceCommand::List(args) => commands::list(&project_dir, args.paths, printer).await,
         },
         Commands::BuildBackend { command } => spawn_blocking(move || match command {
             BuildBackendCommand::BuildSdist { sdist_directory } => {

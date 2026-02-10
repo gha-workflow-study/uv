@@ -10,7 +10,7 @@ use indoc::indoc;
 use insta::{assert_json_snapshot, assert_snapshot};
 use serde::{Deserialize, Serialize};
 
-use crate::common::{TestContext, copy_dir_ignore, make_project, uv_snapshot};
+use uv_test::{copy_dir_ignore, make_project, uv_snapshot};
 
 fn workspaces_dir() -> PathBuf {
     env::current_dir()
@@ -24,9 +24,9 @@ fn workspaces_dir() -> PathBuf {
 }
 
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_albatross_in_examples_bird_feeder() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let workspace = context.temp_dir.child("workspace");
 
     copy_dir_ignore(workspaces_dir(), &workspace).unwrap();
@@ -68,9 +68,9 @@ fn test_albatross_in_examples_bird_feeder() {
 }
 
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_albatross_in_examples() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let workspace = context.temp_dir.child("workspace");
 
     copy_dir_ignore(workspaces_dir(), &workspace).unwrap();
@@ -109,9 +109,9 @@ fn test_albatross_in_examples() {
 }
 
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_albatross_just_project() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let workspace = context.temp_dir.child("workspace");
 
     copy_dir_ignore(workspaces_dir(), &workspace).unwrap();
@@ -150,9 +150,9 @@ fn test_albatross_just_project() {
 }
 
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_albatross_project_in_excluded() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let workspace = context.temp_dir.child("workspace");
 
     copy_dir_ignore(workspaces_dir(), &workspace).unwrap();
@@ -226,9 +226,9 @@ fn test_albatross_project_in_excluded() {
 }
 
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_albatross_root_workspace() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let workspace = context.temp_dir.child("workspace");
 
     copy_dir_ignore(workspaces_dir(), &workspace).unwrap();
@@ -270,9 +270,9 @@ fn test_albatross_root_workspace() {
 }
 
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_albatross_root_workspace_bird_feeder() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let workspace = context.temp_dir.child("workspace");
 
     copy_dir_ignore(workspaces_dir(), &workspace).unwrap();
@@ -316,9 +316,9 @@ fn test_albatross_root_workspace_bird_feeder() {
 }
 
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_albatross_root_workspace_albatross() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let workspace = context.temp_dir.child("workspace");
 
     copy_dir_ignore(workspaces_dir(), &workspace).unwrap();
@@ -362,9 +362,9 @@ fn test_albatross_root_workspace_albatross() {
 }
 
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_albatross_virtual_workspace() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let workspace = context.temp_dir.child("workspace");
 
     copy_dir_ignore(workspaces_dir(), &workspace).unwrap();
@@ -410,9 +410,9 @@ fn test_albatross_virtual_workspace() {
 
 /// Check that `uv run --package` works in a virtual workspace.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_uv_run_with_package_virtual_workspace() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let work_dir = context.temp_dir.join("albatross-virtual-workspace");
 
     copy_dir_ignore(
@@ -480,9 +480,9 @@ fn test_uv_run_with_package_virtual_workspace() -> Result<()> {
 /// Check that `uv run` works from a virtual workspace root, which should sync all packages in the
 /// workspace.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_uv_run_virtual_workspace_root() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let work_dir = context.temp_dir.join("albatross-virtual-workspace");
 
     copy_dir_ignore(
@@ -521,9 +521,9 @@ fn test_uv_run_virtual_workspace_root() -> Result<()> {
 
 /// Check that `uv run --package` works in a root workspace.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_uv_run_with_package_root_workspace() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let work_dir = context.temp_dir.join("albatross-root-workspace");
 
     copy_dir_ignore(workspaces_dir().join("albatross-root-workspace"), &work_dir)?;
@@ -584,9 +584,9 @@ fn test_uv_run_with_package_root_workspace() -> Result<()> {
 
 /// Check that `uv run --isolated` creates isolated virtual environments.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn test_uv_run_isolate() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     let work_dir = context.temp_dir.join("albatross-root-workspace");
 
     copy_dir_ignore(workspaces_dir().join("albatross-root-workspace"), &work_dir)?;
@@ -682,7 +682,7 @@ fn workspace_lock_idempotence(workspace: &str, subdirectories: &[&str]) -> Resul
     let mut shared_lock = None;
 
     for dir in subdirectories {
-        let context = TestContext::new("3.12");
+        let context = uv_test::test_context!("3.12");
         let work_dir = context.temp_dir.join(workspace);
 
         copy_dir_ignore(workspaces_dir().join(workspace), &work_dir)?;
@@ -706,7 +706,7 @@ fn workspace_lock_idempotence(workspace: &str, subdirectories: &[&str]) -> Resul
 
 /// Check that the resolution is the same no matter where in the workspace we are.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn workspace_lock_idempotence_root_workspace() -> Result<()> {
     workspace_lock_idempotence(
         "albatross-root-workspace",
@@ -718,7 +718,7 @@ fn workspace_lock_idempotence_root_workspace() -> Result<()> {
 /// Check that the resolution is the same no matter where in the workspace we are, and that locking
 /// works even if there is no root project.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn workspace_lock_idempotence_virtual_workspace() -> Result<()> {
     workspace_lock_idempotence(
         "albatross-virtual-workspace",
@@ -759,7 +759,7 @@ struct Package {
 /// `e`. We have `a -> b`, `b -> c`, `c -> d`. `e` should not be installed.
 #[test]
 fn workspace_to_workspace_paths_dependencies() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Build the main workspace ...
     let main_workspace = context.temp_dir.child("main-workspace");
@@ -852,10 +852,10 @@ fn workspace_to_workspace_paths_dependencies() -> Result<()> {
     Ok(())
 }
 
-/// Ensure that workspace discovery errors if a member is missing a `pyproject.toml`.
+/// Ensure that workspace discovery skips an empty directory that matches a member glob.
 #[test]
 fn workspace_empty_member() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Build the main workspace ...
     let workspace = context.temp_dir.child("workspace");
@@ -882,6 +882,192 @@ fn workspace_empty_member() -> Result<()> {
     fs_err::create_dir_all(workspace.join("packages").join("c"))?;
 
     uv_snapshot!(context.filters(), context.lock().current_dir(&workspace), @"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    Using CPython 3.12.[X] interpreter at: [PYTHON-3.12]
+    Resolved 2 packages in [TIME]
+    "
+    );
+
+    Ok(())
+}
+
+/// Ensure that workspace discovery skips directories that only contain gitignored files.
+#[test]
+fn workspace_gitignored_member() -> Result<()> {
+    let context = uv_test::test_context!("3.12");
+
+    // Build the main workspace ...
+    let workspace = context.temp_dir.child("workspace");
+    workspace.child("pyproject.toml").write_str(indoc! {r#"
+        [tool.uv.workspace]
+        members = ["packages/*"]
+    "#})?;
+
+    // ... with a `.gitignore` that ignores `__pycache__` ...
+    workspace.child(".gitignore").write_str("__pycache__/\n")?;
+
+    // ... with a  ...
+    let deps = indoc! {r#"
+        dependencies = ["b"]
+
+        [tool.uv.sources]
+        b = { workspace = true }
+    "#};
+    make_project(&workspace.join("packages").join("a"), "a", deps)?;
+
+    // ... and b.
+    let deps = indoc! {r"
+    "};
+    make_project(&workspace.join("packages").join("b"), "b", deps)?;
+
+    // ... and a c that only contains gitignored files.
+    fs_err::create_dir_all(workspace.join("packages").join("c").join("__pycache__"))?;
+    fs_err::write(
+        workspace
+            .join("packages")
+            .join("c")
+            .join("__pycache__")
+            .join("test.cpython-312.pyc"),
+        "fake",
+    )?;
+
+    uv_snapshot!(context.filters(), context.lock().current_dir(&workspace), @"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    Using CPython 3.12.[X] interpreter at: [PYTHON-3.12]
+    Resolved 2 packages in [TIME]
+    "
+    );
+
+    let lock: SourceLock = toml::from_str(&fs_err::read_to_string(workspace.join("uv.lock"))?)?;
+
+    assert_json_snapshot!(lock.sources(), @r#"
+    {
+      "a": {
+        "editable": "packages/a"
+      },
+      "b": {
+        "editable": "packages/b"
+      }
+    }
+    "#);
+
+    Ok(())
+}
+
+/// Ensure that workspace discovery skips directories that only contain files ignored via
+/// `.ignore` (not just `.gitignore`).
+#[test]
+fn workspace_ignored_member() -> Result<()> {
+    let context = uv_test::test_context!("3.12");
+
+    // Build the main workspace ...
+    let workspace = context.temp_dir.child("workspace");
+    workspace.child("pyproject.toml").write_str(indoc! {r#"
+        [tool.uv.workspace]
+        members = ["packages/*"]
+    "#})?;
+
+    // ... with an `.ignore` file that ignores `__pycache__` ...
+    workspace.child(".ignore").write_str("__pycache__/\n")?;
+
+    // ... with a  ...
+    let deps = indoc! {r#"
+        dependencies = ["b"]
+
+        [tool.uv.sources]
+        b = { workspace = true }
+    "#};
+    make_project(&workspace.join("packages").join("a"), "a", deps)?;
+
+    // ... and b.
+    let deps = indoc! {r"
+    "};
+    make_project(&workspace.join("packages").join("b"), "b", deps)?;
+
+    // ... and a c that only contains ignored files.
+    fs_err::create_dir_all(workspace.join("packages").join("c").join("__pycache__"))?;
+    fs_err::write(
+        workspace
+            .join("packages")
+            .join("c")
+            .join("__pycache__")
+            .join("test.cpython-312.pyc"),
+        "fake",
+    )?;
+
+    uv_snapshot!(context.filters(), context.lock().current_dir(&workspace), @"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    Using CPython 3.12.[X] interpreter at: [PYTHON-3.12]
+    Resolved 2 packages in [TIME]
+    "
+    );
+
+    let lock: SourceLock = toml::from_str(&fs_err::read_to_string(workspace.join("uv.lock"))?)?;
+
+    assert_json_snapshot!(lock.sources(), @r#"
+    {
+      "a": {
+        "editable": "packages/a"
+      },
+      "b": {
+        "editable": "packages/b"
+      }
+    }
+    "#);
+
+    Ok(())
+}
+
+/// Ensure that workspace discovery still errors for non-empty, non-gitignored directories
+/// missing a `pyproject.toml`.
+#[test]
+fn workspace_nonempty_member_no_pyproject() -> Result<()> {
+    let context = uv_test::test_context!("3.12");
+
+    // Build the main workspace ...
+    let workspace = context.temp_dir.child("workspace");
+    workspace.child("pyproject.toml").write_str(indoc! {r#"
+        [tool.uv.workspace]
+        members = ["packages/*"]
+    "#})?;
+
+    // ... with a `.gitignore` that ignores `__pycache__` ...
+    workspace.child(".gitignore").write_str("__pycache__/\n")?;
+
+    // ... with a  ...
+    let deps = indoc! {r#"
+        dependencies = ["b"]
+
+        [tool.uv.sources]
+        b = { workspace = true }
+    "#};
+    make_project(&workspace.join("packages").join("a"), "a", deps)?;
+
+    // ... and b.
+    let deps = indoc! {r"
+    "};
+    make_project(&workspace.join("packages").join("b"), "b", deps)?;
+
+    // ... and a c that contains non-gitignored files but no `pyproject.toml`.
+    fs_err::create_dir_all(workspace.join("packages").join("c"))?;
+    fs_err::write(
+        workspace.join("packages").join("c").join("README.md"),
+        "# Hello",
+    )?;
+
+    uv_snapshot!(context.filters(), context.lock().current_dir(&workspace), @"
     success: false
     exit_code: 2
     ----- stdout -----
@@ -897,7 +1083,7 @@ fn workspace_empty_member() -> Result<()> {
 /// Ensure that workspace discovery ignores hidden directories.
 #[test]
 fn workspace_hidden_files() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Build the main workspace ...
     let workspace = context.temp_dir.child("workspace");
@@ -953,7 +1139,7 @@ fn workspace_hidden_files() -> Result<()> {
 /// Ensure that workspace discovery accepts valid hidden directories.
 #[test]
 fn workspace_hidden_member() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Build the main workspace ...
     let workspace = context.temp_dir.child("workspace");
@@ -1019,7 +1205,7 @@ fn workspace_hidden_member() -> Result<()> {
 /// Ensure that workspace discovery accepts valid hidden directories.
 #[test]
 fn workspace_non_included_member() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Build the main workspace ...
     let workspace = context.temp_dir.child("workspace");
@@ -1082,7 +1268,7 @@ fn workspace_non_included_member() -> Result<()> {
 /// relative to the member.
 #[test]
 fn workspace_inherit_sources() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Create the workspace root.
     let workspace = context.temp_dir.child("workspace");
@@ -1314,9 +1500,9 @@ fn workspace_inherit_sources() -> Result<()> {
 
 /// Tests error messages when a workspace member's dependencies cannot be resolved.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn workspace_unsatisfiable_member_dependencies() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Create the workspace root.
     let workspace = context.temp_dir.child("workspace");
@@ -1370,9 +1556,9 @@ fn workspace_unsatisfiable_member_dependencies() -> Result<()> {
 /// Tests error messages when a workspace member's dependencies conflict with
 /// another member's.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn workspace_unsatisfiable_member_dependencies_conflicting() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Create the workspace root.
     let workspace = context.temp_dir.child("workspace");
@@ -1438,9 +1624,9 @@ fn workspace_unsatisfiable_member_dependencies_conflicting() -> Result<()> {
 /// Tests error messages when a workspace member's dependencies conflict with
 /// two other member's.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn workspace_unsatisfiable_member_dependencies_conflicting_threeway() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Create the workspace root.
     let workspace = context.temp_dir.child("workspace");
@@ -1521,9 +1707,9 @@ fn workspace_unsatisfiable_member_dependencies_conflicting_threeway() -> Result<
 /// Tests error messages when a workspace member's dependencies conflict with
 /// another member's optional dependencies.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn workspace_unsatisfiable_member_dependencies_conflicting_extra() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Create the workspace root.
     let workspace = context.temp_dir.child("workspace");
@@ -1591,9 +1777,9 @@ fn workspace_unsatisfiable_member_dependencies_conflicting_extra() -> Result<()>
 /// Tests error messages when a workspace member's dependencies conflict with
 /// another member's development dependencies.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn workspace_unsatisfiable_member_dependencies_conflicting_dev() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Create the workspace root.
     let workspace = context.temp_dir.child("workspace");
@@ -1662,9 +1848,9 @@ fn workspace_unsatisfiable_member_dependencies_conflicting_dev() -> Result<()> {
 /// Tests error messages when a workspace member's name shadows a dependency of
 /// another member.
 #[test]
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 fn workspace_member_name_shadows_dependencies() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Create the workspace root.
     let workspace = context.temp_dir.child("workspace");
@@ -1736,7 +1922,7 @@ fn workspace_member_name_shadows_dependencies() -> Result<()> {
 /// the paths don't line up by accident.
 #[test]
 fn test_path_hopping() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Build the main project ...
     let deps = indoc! {r#"
@@ -1792,9 +1978,9 @@ fn test_path_hopping() -> Result<()> {
 /// are correctly resolving `d` to a git dependency with a subdirectory and not relative to the
 /// checkout directory.
 #[test]
-#[cfg(feature = "git")]
+#[cfg(feature = "test-git")]
 fn transitive_dep_in_git_workspace_no_root() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let pyproject_toml = context.temp_dir.child("pyproject.toml");
     pyproject_toml.write_str(
@@ -1867,9 +2053,9 @@ fn transitive_dep_in_git_workspace_no_root() -> Result<()> {
 /// to `uv-git-workspace-in-root`. Check that we are correctly resolving `uv-git-workspace-in-root`
 /// to a git dependency without a subdirectory and not relative to the checkout directory.
 #[test]
-#[cfg(feature = "git")]
+#[cfg(feature = "test-git")]
 fn transitive_dep_in_git_workspace_with_root() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let pyproject_toml = context.temp_dir.child("pyproject.toml");
     pyproject_toml.write_str(
@@ -1934,7 +2120,7 @@ fn transitive_dep_in_git_workspace_with_root() -> Result<()> {
 
 #[test]
 fn workspace_members_with_leading_dot_slash() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Build the main workspace with leading `./` in member paths
     let workspace = context.temp_dir.child("workspace");
@@ -2004,7 +2190,7 @@ fn workspace_members_with_leading_dot_slash() -> Result<()> {
 
 #[test]
 fn workspace_members_with_parent_directory() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Build a workspace with a member outside its directory using `../`
     let workspace = context.temp_dir.child("workspace");
@@ -2049,7 +2235,7 @@ fn workspace_members_with_parent_directory() -> Result<()> {
 
 #[test]
 fn workspace_members_with_complex_relative_paths() -> Result<()> {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Build a workspace with complex relative path normalization
     let workspace = context.temp_dir.child("workspace");

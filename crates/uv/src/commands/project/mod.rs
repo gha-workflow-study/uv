@@ -1196,10 +1196,21 @@ impl WorkspacePython {
                 .with_no_config(no_config),
         )
         .await?
-        {
+        .filter(|file| {
+            // Ignore global version files that are incompatible with requires-python
+            if !file.is_global() {
+                return true;
+            }
+            match (file.version(), requires_python.as_ref()) {
+                (Some(request), Some(requires_python)) => request
+                    .as_pep440_version()
+                    .is_none_or(|version| requires_python.contains(&version)),
+                _ => true,
+            }
+        }) {
             // (2) Request from `.python-version`
             let source = PythonRequestSource::DotPythonVersion(file.clone());
-            let request = file.into_version();
+            let request = file.version().cloned();
             (source, request)
         } else {
             // (3) `requires-python` in `pyproject.toml`
@@ -1443,7 +1454,6 @@ impl ProjectEnvironment {
                         false,
                         false,
                         upgradeable,
-                        preview,
                     )?;
                     return Ok(if replace {
                         Self::WouldReplace(root, environment, temp_dir)
@@ -1485,7 +1495,6 @@ impl ProjectEnvironment {
                     false,
                     false,
                     upgradeable,
-                    preview,
                 )?;
 
                 if replace {
@@ -1639,7 +1648,6 @@ impl ScriptEnvironment {
                         false,
                         false,
                         upgradeable,
-                        preview,
                     )?;
                     return Ok(if root.exists() {
                         Self::WouldReplace(root, environment, temp_dir)
@@ -1681,7 +1689,6 @@ impl ScriptEnvironment {
                     false,
                     false,
                     upgradeable,
-                    preview,
                 )?;
 
                 Ok(if replaced {

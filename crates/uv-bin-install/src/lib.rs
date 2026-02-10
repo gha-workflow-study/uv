@@ -36,7 +36,7 @@ impl Binary {
     pub fn default_version(&self) -> Version {
         match self {
             // TODO(zanieb): Figure out a nice way to automate updating this
-            Self::Ruff => Version::new([0, 12, 5]),
+            Self::Ruff => Version::new([0, 15, 0]),
         }
     }
 
@@ -383,21 +383,6 @@ async fn fetch_and_find_matching_version(
             source: reqwest_middleware::Error::Reqwest(err),
         })?;
 
-    // Parse a single JSON line and check if it matches the constraints and platform.
-    let parse_and_check = |line: &[u8]| -> Result<Option<ResolvedVersion>, Error> {
-        let line_str = std::str::from_utf8(line)?;
-        if line_str.trim().is_empty() {
-            return Ok(None);
-        }
-        let version_info: BinVersionInfo = serde_json::from_str(line_str)?;
-        Ok(check_version_match(
-            &version_info,
-            constraints,
-            exclude_newer,
-            platform_name,
-        ))
-    };
-
     // Stream the response line by line
     let mut stream = response.bytes_stream();
     let mut buffer = Vec::new();
@@ -412,18 +397,24 @@ async fn fetch_and_find_matching_version(
         // Process complete lines
         while let Some(newline_pos) = buffer.iter().position(|&b| b == b'\n') {
             let line = &buffer[..newline_pos];
-            let result = parse_and_check(line)?;
-            buffer.drain(..=newline_pos);
-
-            if let Some(resolved) = result {
-                return Ok(resolved);
+            if let Some(version_info) = parse_ndjson_line(line)? {
+                if let Some(resolved) =
+                    check_version_match(&version_info, constraints, exclude_newer, platform_name)
+                {
+                    return Ok(resolved);
+                }
             }
+            buffer.drain(..=newline_pos);
         }
     }
 
     // Process any remaining data in buffer (in case there's no trailing newline)
-    if let Some(resolved) = parse_and_check(&buffer)? {
-        return Ok(resolved);
+    if let Some(version_info) = parse_ndjson_line(&buffer)? {
+        if let Some(resolved) =
+            check_version_match(&version_info, constraints, exclude_newer, platform_name)
+        {
+            return Ok(resolved);
+        }
     }
 
     // No matching version found
@@ -438,6 +429,18 @@ async fn fetch_and_find_matching_version(
             platform: platform_name.to_string(),
         }),
     }
+}
+
+/// Parse a single line of NDJSON into a [`BinVersionInfo`].
+///
+/// Returns `Ok(None)` for blank lines, `Ok(Some(info))` on success.
+fn parse_ndjson_line(line: &[u8]) -> Result<Option<BinVersionInfo>, Error> {
+    let line_str = std::str::from_utf8(line)?;
+    if line_str.trim().is_empty() {
+        return Ok(None);
+    }
+    let version_info: BinVersionInfo = serde_json::from_str(line_str)?;
+    Ok(Some(version_info))
 }
 
 /// Check if a version matches the constraints and find the artifact for the platform.

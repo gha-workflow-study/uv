@@ -1,15 +1,14 @@
 use anyhow::Result;
 use assert_cmd::assert::OutputAssertExt;
 use assert_fs::{fixture::PathChild, prelude::FileWriteStr};
-#[cfg(feature = "native-auth")]
 use uv_static::EnvVars;
 
-use crate::common::{TestContext, uv_snapshot};
+use uv_test::uv_snapshot;
 
 #[test]
 #[cfg(feature = "native-auth")]
 fn add_package_native_auth_realm() -> Result<()> {
-    let context = TestContext::new("3.12").with_real_home();
+    let context = uv_test::test_context!("3.12").with_real_home();
 
     // Clear state before the test
     context
@@ -118,7 +117,7 @@ fn add_package_native_auth_realm() -> Result<()> {
 #[test]
 #[cfg(feature = "native-auth")]
 fn add_package_native_auth() -> Result<()> {
-    let context = TestContext::new("3.12").with_real_home();
+    let context = uv_test::test_context!("3.12").with_real_home();
 
     // Clear state before the test
     context
@@ -228,7 +227,7 @@ fn add_package_native_auth() -> Result<()> {
 #[test]
 #[cfg(feature = "native-auth")]
 fn token_native_auth() -> Result<()> {
-    let context = TestContext::new_with_versions(&[]).with_real_home();
+    let context = uv_test::test_context_with_versions!(&[]).with_real_home();
 
     // Clear state before the test
     context
@@ -390,7 +389,7 @@ fn token_native_auth() -> Result<()> {
 #[test]
 #[cfg(feature = "native-auth")]
 fn token_native_auth_realm() -> Result<()> {
-    let context = TestContext::new_with_versions(&[]).with_real_home();
+    let context = uv_test::test_context_with_versions!(&[]).with_real_home();
 
     // Clear state before the test
     context
@@ -589,7 +588,7 @@ fn token_native_auth_realm() -> Result<()> {
 #[test]
 #[cfg(feature = "native-auth")]
 fn login_native_auth() -> Result<()> {
-    let context = TestContext::new_with_versions(&[]).with_real_home();
+    let context = uv_test::test_context_with_versions!(&[]).with_real_home();
 
     // Clear state before the test
     context
@@ -664,7 +663,7 @@ fn login_native_auth() -> Result<()> {
 #[test]
 #[cfg(feature = "native-auth")]
 fn login_token_native_auth() -> Result<()> {
-    let context = TestContext::new_with_versions(&[]).with_real_home();
+    let context = uv_test::test_context_with_versions!(&[]).with_real_home();
 
     // Clear state before the test
     context
@@ -696,7 +695,7 @@ fn login_token_native_auth() -> Result<()> {
 #[test]
 #[cfg(feature = "native-auth")]
 fn logout_native_auth() -> Result<()> {
-    let context = TestContext::new_with_versions(&[]).with_real_home();
+    let context = uv_test::test_context_with_versions!(&[]).with_real_home();
 
     // Clear state before the test
     context
@@ -858,7 +857,7 @@ fn logout_native_auth() -> Result<()> {
 #[test]
 #[cfg(feature = "native-auth")]
 fn logout_token_native_auth() -> Result<()> {
-    let context = TestContext::new_with_versions(&[]).with_real_home();
+    let context = uv_test::test_context_with_versions!(&[]).with_real_home();
 
     // Clear state before the test
     context
@@ -900,7 +899,7 @@ fn logout_token_native_auth() -> Result<()> {
 #[test]
 #[cfg(feature = "native-auth")]
 fn login_native_auth_url() {
-    let context = TestContext::new_with_versions(&[]).with_real_home();
+    let context = uv_test::test_context_with_versions!(&[]).with_real_home();
 
     // A domain-only service name gets https:// prepended
     uv_snapshot!(context.auth_login()
@@ -1074,7 +1073,7 @@ fn login_native_auth_url() {
 
 #[test]
 fn login_text_store() {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Login with a username and password
     uv_snapshot!(context.auth_login()
@@ -1206,7 +1205,7 @@ fn login_text_store() {
 #[test]
 #[expect(clippy::disallowed_types)]
 fn login_password_stdin() -> Result<()> {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Create a temporary file with the password
     let password_file = context.temp_dir.child("password.txt");
@@ -1249,7 +1248,7 @@ fn login_password_stdin() -> Result<()> {
 #[test]
 #[expect(clippy::disallowed_types)]
 fn login_token_stdin() -> Result<()> {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Create a temporary file with the token
     let token_file = context.temp_dir.child("token.txt");
@@ -1287,7 +1286,7 @@ fn login_token_stdin() -> Result<()> {
 
 #[test]
 fn token_text_store() {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Login first
     context
@@ -1352,7 +1351,7 @@ fn token_text_store() {
 
 #[test]
 fn logout_text_store() {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Login first
     context
@@ -1416,7 +1415,7 @@ fn logout_text_store() {
 
 #[test]
 fn auth_disabled_provider_uses_text_store() {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Login with disabled provider should use text store
     uv_snapshot!(context.auth_login()
@@ -1455,7 +1454,7 @@ fn auth_disabled_provider_uses_text_store() {
 
 #[test]
 fn login_text_store_strips_simple_suffix() {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Login with `/simple` suffix - should strip it and store credentials for the root URL
     uv_snapshot!(context.auth_login()
@@ -1540,7 +1539,7 @@ fn login_text_store_strips_simple_suffix() {
 
 #[test]
 fn logout_text_store_strips_simple_suffix() {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Login with `/simple` suffix first
     context
@@ -1595,7 +1594,7 @@ fn logout_text_store_strips_simple_suffix() {
 
 #[test]
 fn token_text_store_strips_simple_suffix() {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Login with `/simple` suffix
     context
@@ -1646,7 +1645,7 @@ fn token_text_store_strips_simple_suffix() {
 
 #[test]
 fn token_text_store_username() {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Login with specific username
     context
@@ -1746,7 +1745,7 @@ fn token_text_store_username() {
 
 #[test]
 fn logout_text_store_multiple_usernames() {
-    let context = TestContext::new_with_versions(&[]);
+    let context = uv_test::test_context_with_versions!(&[]);
 
     // Login with two different usernames for the same service
     context
@@ -1826,7 +1825,7 @@ fn logout_text_store_multiple_usernames() {
 #[test]
 #[cfg(feature = "native-auth")]
 fn native_auth_prefix_match() -> Result<()> {
-    let context = TestContext::new_with_versions(&[]).with_real_home();
+    let context = uv_test::test_context_with_versions!(&[]).with_real_home();
 
     // Clear state before the test
     context
@@ -1876,7 +1875,7 @@ fn native_auth_prefix_match() -> Result<()> {
 #[test]
 #[cfg(feature = "native-auth")]
 fn native_auth_host_fallback() -> Result<()> {
-    let context = TestContext::new_with_versions(&[]).with_real_home();
+    let context = uv_test::test_context_with_versions!(&[]).with_real_home();
 
     // Clear state before the test
     context
@@ -1940,7 +1939,7 @@ fn native_auth_host_fallback() -> Result<()> {
 /// Test credential helper with basic auth credentials
 #[test]
 fn bazel_helper_basic_auth() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Store credentials
     uv_snapshot!(context.filters(), context.auth_login()
@@ -1974,7 +1973,7 @@ fn bazel_helper_basic_auth() {
 /// Test credential helper with token credentials
 #[test]
 fn bazel_helper_token() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Store token
     uv_snapshot!(context.filters(), context.auth_login()
@@ -2008,7 +2007,7 @@ fn bazel_helper_token() {
 /// Test credential helper with no credentials found
 #[test]
 fn bazel_helper_no_credentials() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
     uv_snapshot!(context.filters(), context.auth_helper()
         .arg("--protocol=bazel")
         .arg("get"),
@@ -2028,7 +2027,7 @@ fn bazel_helper_no_credentials() {
 /// Test credential helper with invalid JSON input
 #[test]
 fn bazel_helper_invalid_json() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     uv_snapshot!(context.filters(), context.auth_helper()
         .arg("--protocol=bazel")
@@ -2050,7 +2049,7 @@ fn bazel_helper_invalid_json() {
 /// Test credential helper with invalid URI
 #[test]
 fn bazel_helper_invalid_uri() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     uv_snapshot!(context.filters(), context.auth_helper()
         .arg("--protocol=bazel")
@@ -2072,7 +2071,7 @@ fn bazel_helper_invalid_uri() {
 /// Test credential helper with username in URI
 #[test]
 fn bazel_helper_username_in_uri() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Store credentials with specific username
     uv_snapshot!(context.filters(), context.auth_login()
@@ -2107,7 +2106,7 @@ fn bazel_helper_username_in_uri() {
 /// Test credential helper with unknown username in URI
 #[test]
 fn bazel_helper_unknown_username_in_uri() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     // Store credentials with specific username
     uv_snapshot!(context.filters(), context.auth_login()
@@ -2136,5 +2135,172 @@ fn bazel_helper_unknown_username_in_uri() {
     ----- stderr -----
     warning: The `uv auth helper` command is experimental and may change without warning. Pass `--preview-features auth-helper` to disable this warning
     "#
+    );
+}
+
+/// Test that `pyx.dev` is recognized as a pyx domain even when `PYX_API_URL` points elsewhere.
+///
+/// When `PYX_API_URL` is set to a different URL (e.g., localhost for development),
+/// `pyx.dev` should still be recognized as a pyx domain and use the OAuth flow.
+#[test]
+fn login_pyx_dev_with_custom_api_url() {
+    let context = uv_test::test_context_with_versions!(&[]);
+
+    // When PYX_API_URL is set to localhost, `pyx.dev` should still be recognized as pyx
+    // and reject username/password (because pyx uses OAuth, not basic auth).
+    uv_snapshot!(context.auth_login()
+        .arg("pyx.dev")
+        .arg("--username")
+        .arg("testuser")
+        .arg("--password")
+        .arg("testpass")
+        .env(EnvVars::PYX_API_URL, "http://localhost:8000"), @r"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: Cannot specify a username when logging in to pyx
+    "
+    );
+
+    // Same for api.pyx.dev
+    uv_snapshot!(context.auth_login()
+        .arg("api.pyx.dev")
+        .arg("--username")
+        .arg("testuser")
+        .arg("--password")
+        .arg("testpass")
+        .env(EnvVars::PYX_API_URL, "http://localhost:8000"), @r"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: Cannot specify a username when logging in to pyx
+    "
+    );
+
+    // Other subdomains like beta.pyx.dev are NOT recognized as default pyx domains.
+    // They fall through to normal credential handling when PYX_API_URL doesn't match.
+    uv_snapshot!(context.auth_login()
+        .arg("beta.pyx.dev")
+        .arg("--username")
+        .arg("testuser")
+        .arg("--password")
+        .arg("testpass")
+        .env(EnvVars::PYX_API_URL, "http://localhost:8000"), @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    Stored credentials for testuser@https://beta.pyx.dev/
+    "
+    );
+}
+
+/// Test that logout recognizes `pyx.dev` even with custom `PYX_API_URL`.
+#[test]
+fn logout_pyx_dev_with_custom_api_url() {
+    let context = uv_test::test_context_with_versions!(&[]);
+
+    // Logout for pyx.dev should use the pyx flow (succeeds with no-op message because
+    // no credentials exist, but verifies it's recognized as pyx).
+    uv_snapshot!(context.auth_logout()
+        .arg("pyx.dev")
+        .env(EnvVars::PYX_API_URL, "http://localhost:8000"), @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    No credentials found for http://localhost:8000/
+    "
+    );
+}
+
+/// Test that `uv auth token` recognizes `pyx.dev` even with custom `PYX_API_URL`.
+#[test]
+fn token_pyx_dev_with_custom_api_url() {
+    let context = uv_test::test_context_with_versions!(&[]);
+
+    // Token for pyx.dev should use the pyx flow and reject username.
+    uv_snapshot!(context.auth_token()
+        .arg("pyx.dev")
+        .arg("--username")
+        .arg("testuser")
+        .env(EnvVars::PYX_API_URL, "http://localhost:8000"), @r"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: Cannot specify a username when logging in to pyx
+    "
+    );
+}
+
+/// Test behavior when using a pyx.dev subdomain (like staging) without setting `PYX_API_URL`.
+///
+/// This verifies that subdomains like `astral-sh-staging-api.pyx.dev` are NOT automatically
+/// treated as pyx domains - users must set `PYX_API_URL` to use non-default pyx environments.
+#[test]
+fn token_pyx_staging_without_env_var() {
+    let context = uv_test::test_context_with_versions!(&[]);
+
+    // Without PYX_API_URL set, staging pyx URLs are NOT recognized as pyx domains.
+    // They fall through to the normal credential store lookup.
+    uv_snapshot!(context.auth_token()
+        .arg("https://astral-sh-staging-api.pyx.dev"), @r"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: Failed to fetch credentials for https://astral-sh-staging-api.pyx.dev/
+    "
+    );
+}
+
+/// Test that staging pyx URLs work correctly when `PYX_API_URL` is set.
+#[test]
+fn login_pyx_staging_with_env_var() {
+    let context = uv_test::test_context_with_versions!(&[]);
+
+    // When PYX_API_URL is set to a staging URL, that URL is recognized as pyx
+    // and rejects username/password.
+    uv_snapshot!(context.auth_login()
+        .arg("https://astral-sh-staging-api.pyx.dev")
+        .arg("--username")
+        .arg("testuser")
+        .arg("--password")
+        .arg("testpass")
+        .env(EnvVars::PYX_API_URL, "https://astral-sh-staging-api.pyx.dev"), @r"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: Cannot specify a username when logging in to pyx
+    "
+    );
+
+    // When PYX_API_URL is set to staging, `pyx.dev` is still recognized as pyx
+    // (via is_default_pyx_domain) and uses the OAuth flow.
+    uv_snapshot!(context.auth_login()
+        .arg("pyx.dev")
+        .arg("--username")
+        .arg("testuser")
+        .arg("--password")
+        .arg("testpass")
+        .env(EnvVars::PYX_API_URL, "https://astral-sh-staging-api.pyx.dev"), @r"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: Cannot specify a username when logging in to pyx
+    "
     );
 }

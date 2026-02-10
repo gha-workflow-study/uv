@@ -3,7 +3,7 @@
 //! Generated with `./scripts/sync_scenarios.sh`
 //! Scenarios from <https://github.com/astral-sh/packse/tree/0.3.53/scenarios>
 //!
-#![cfg(all(feature = "python", feature = "pypi", unix))]
+#![cfg(all(feature = "test-python", feature = "test-pypi", unix))]
 
 use std::process::Command;
 
@@ -14,7 +14,7 @@ use predicates::prelude::predicate;
 
 use uv_static::EnvVars;
 
-use crate::common::{
+use uv_test::{
     TestContext, build_vendor_links_url, get_bin, packse_index_url, python_path_with_versions,
     uv_snapshot,
 };
@@ -23,7 +23,7 @@ use crate::common::{
 fn command(context: &TestContext, python_versions: &[&str]) -> Command {
     let python_path = python_path_with_versions(&context.temp_dir, python_versions)
         .expect("Failed to create Python test path");
-    let mut command = Command::new(get_bin());
+    let mut command = Command::new(get_bin!());
     command
         .arg("pip")
         .arg("compile")
@@ -54,7 +54,7 @@ fn command(context: &TestContext, python_versions: &[&str]) -> Command {
 /// ```
 #[test]
 fn compatible_python_incompatible_override() -> Result<()> {
-    let context = TestContext::new("3.11");
+    let context = uv_test::test_context!("3.11");
     let python_versions = &[];
 
     // In addition to the standard filters, swap out package names for shorter messages
@@ -102,7 +102,7 @@ fn compatible_python_incompatible_override() -> Result<()> {
 /// ```
 #[test]
 fn incompatible_python_compatible_override_available_no_wheels() -> Result<()> {
-    let context = TestContext::new("3.9");
+    let context = uv_test::test_context!("3.9");
     let python_versions = &["3.11"];
 
     // In addition to the standard filters, swap out package names for shorter messages
@@ -155,7 +155,7 @@ fn incompatible_python_compatible_override_available_no_wheels() -> Result<()> {
 /// ```
 #[test]
 fn incompatible_python_compatible_override_no_compatible_wheels() -> Result<()> {
-    let context = TestContext::new("3.9");
+    let context = uv_test::test_context!("3.9");
     let python_versions = &[];
 
     // In addition to the standard filters, swap out package names for shorter messages
@@ -210,7 +210,7 @@ fn incompatible_python_compatible_override_no_compatible_wheels() -> Result<()> 
 /// ```
 #[test]
 fn incompatible_python_compatible_override_other_wheel() -> Result<()> {
-    let context = TestContext::new("3.9");
+    let context = uv_test::test_context!("3.9");
     let python_versions = &[];
 
     // In addition to the standard filters, swap out package names for shorter messages
@@ -261,7 +261,7 @@ fn incompatible_python_compatible_override_other_wheel() -> Result<()> {
 /// ```
 #[test]
 fn incompatible_python_compatible_override_unavailable_no_wheels() -> Result<()> {
-    let context = TestContext::new("3.9");
+    let context = uv_test::test_context!("3.9");
     let python_versions = &[];
 
     // In addition to the standard filters, swap out package names for shorter messages
@@ -313,7 +313,7 @@ fn incompatible_python_compatible_override_unavailable_no_wheels() -> Result<()>
 /// ```
 #[test]
 fn incompatible_python_compatible_override() -> Result<()> {
-    let context = TestContext::new("3.9");
+    let context = uv_test::test_context!("3.9");
     let python_versions = &[];
 
     // In addition to the standard filters, swap out package names for shorter messages
@@ -360,10 +360,10 @@ fn incompatible_python_compatible_override() -> Result<()> {
 ///     └── a-1.0.0
 ///         └── requires python>=3.9.4
 /// ```
-#[cfg(feature = "python-patch")]
+#[cfg(feature = "test-python-patch")]
 #[test]
 fn python_patch_override_no_patch() -> Result<()> {
-    let context = TestContext::new("3.9.20");
+    let context = uv_test::test_context!("3.9.20");
     let python_versions = &[];
 
     // In addition to the standard filters, swap out package names for shorter messages
@@ -408,10 +408,10 @@ fn python_patch_override_no_patch() -> Result<()> {
 ///     └── a-1.0.0
 ///         └── requires python>=3.9.0
 /// ```
-#[cfg(feature = "python-patch")]
+#[cfg(feature = "test-python-patch")]
 #[test]
 fn python_patch_override_patch_compatible() -> Result<()> {
-    let context = TestContext::new("3.9.20");
+    let context = uv_test::test_context!("3.9.20");
     let python_versions = &[];
 
     // In addition to the standard filters, swap out package names for shorter messages

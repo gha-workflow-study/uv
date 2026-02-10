@@ -1,13 +1,22 @@
+use std::convert::Infallible;
 use std::io;
+use std::time::{Duration, Instant};
 
 use assert_fs::fixture::{ChildPath, FileWriteStr, PathChild};
+use bytes::Bytes;
 use http::StatusCode;
+use http_body_util::combinators::BoxBody;
+use http_body_util::{BodyExt, StreamBody};
+use hyper::body::Frame;
+use hyper::service::service_fn;
+use hyper_util::rt::TokioIo;
 use serde_json::json;
-use uv_static::EnvVars;
+use tokio_stream::wrappers::ReceiverStream;
 use wiremock::matchers::{any, method};
 use wiremock::{Mock, MockServer, Request, ResponseTemplate};
 
-use crate::common::{TestContext, uv_snapshot};
+use uv_static::EnvVars;
+use uv_test::{TestContext, uv_snapshot};
 
 /// Creates a CONNECT tunnel proxy that forwards connections to the target.
 ///
@@ -167,10 +176,67 @@ async fn mixed_error_server() -> (MockServer, String) {
     (server, mock_server_uri)
 }
 
+async fn time_out_response(
+    _req: hyper::Request<hyper::body::Incoming>,
+) -> Result<hyper::Response<BoxBody<Bytes, Infallible>>, Infallible> {
+    let (tx, rx) = tokio::sync::mpsc::channel(1);
+    tokio::spawn(async move {
+        let _ = tx.send(Ok(Frame::data(Bytes::new()))).await;
+        tokio::time::sleep(Duration::from_secs(60)).await;
+    });
+    let body = StreamBody::new(ReceiverStream::new(rx)).boxed();
+    Ok(hyper::Response::builder()
+        .header("Content-Type", "text/html")
+        .body(body)
+        .unwrap())
+}
+
+/// Returns the server URL and a drop guard that shuts down the server.
+///
+/// The server runs in a thread with its own tokio runtime, so it
+/// won't be starved by the subprocess blocking the test thread. Dropping the
+/// guard shuts down the runtime and all tasks running in it.
+fn read_timeout_server() -> (String, impl Drop) {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let server = format!("http://{}", listener.local_addr().unwrap());
+
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+
+    std::thread::spawn(move || {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        runtime.block_on(async move {
+            let listener = tokio::net::TcpListener::from_std(listener).unwrap();
+            tokio::select! {
+                _ = async {
+                    loop {
+                        let (stream, _) = listener.accept().await.unwrap();
+                        let io = TokioIo::new(stream);
+
+                        tokio::spawn(async move {
+                           let _ = hyper_util::server::conn::auto::Builder::new(
+                                hyper_util::rt::TokioExecutor::new(),
+                            )
+                            .serve_connection(io, service_fn(time_out_response))
+                            .await;
+                        });
+                    }
+                } => {}
+                _ = shutdown_rx => {}
+            }
+        });
+    });
+
+    (server, shutdown_tx)
+}
+
 /// Check the simple index error message when the server returns HTTP status 500, a retryable error.
 #[tokio::test]
 async fn simple_http_500() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let (_server_drop_guard, mock_server_uri) = http_error_server().await;
 
@@ -195,7 +261,7 @@ async fn simple_http_500() {
 /// Check the simple index error message when the server returns a retryable IO error.
 #[tokio::test]
 async fn simple_io_err() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let (_server_drop_guard, mock_server_uri) = io_error_server().await;
 
@@ -222,7 +288,7 @@ async fn simple_io_err() {
 /// Check the find links error message when the server returns HTTP status 500, a retryable error.
 #[tokio::test]
 async fn find_links_http_500() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let (_server_drop_guard, mock_server_uri) = http_error_server().await;
 
@@ -249,7 +315,7 @@ async fn find_links_http_500() {
 /// Check the find links error message when the server returns a retryable IO error.
 #[tokio::test]
 async fn find_links_io_error() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let (_server_drop_guard, mock_server_uri) = io_error_server().await;
 
@@ -279,7 +345,7 @@ async fn find_links_io_error() {
 /// returns different kinds of retryable errors.
 #[tokio::test]
 async fn find_links_mixed_error() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let (_server_drop_guard, mock_server_uri) = mixed_error_server().await;
 
@@ -307,7 +373,7 @@ async fn find_links_mixed_error() {
 /// error.
 #[tokio::test]
 async fn direct_url_http_500() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let (_server_drop_guard, mock_server_uri) = http_error_server().await;
 
@@ -334,7 +400,7 @@ async fn direct_url_http_500() {
 /// Check the direct package URL error message when the server returns a retryable IO error.
 #[tokio::test]
 async fn direct_url_io_error() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let (_server_drop_guard, mock_server_uri) = io_error_server().await;
 
@@ -364,7 +430,7 @@ async fn direct_url_io_error() {
 /// different kinds of retryable errors.
 #[tokio::test]
 async fn direct_url_mixed_error() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let (_server_drop_guard, mock_server_uri) = mixed_error_server().await;
 
@@ -418,7 +484,7 @@ fn write_python_downloads_json(context: &TestContext, mock_server_uri: &String) 
 /// error.
 #[tokio::test]
 async fn python_install_http_500() {
-    let context = TestContext::new("3.12")
+    let context = uv_test::test_context!("3.12")
         .with_filtered_python_keys()
         .with_filtered_exe_suffix()
         .with_managed_python_dirs();
@@ -449,7 +515,7 @@ async fn python_install_http_500() {
 /// Check the Python install error message when the server returns a retryable IO error.
 #[tokio::test]
 async fn python_install_io_error() {
-    let context = TestContext::new("3.12")
+    let context = uv_test::test_context!("3.12")
         .with_filtered_python_keys()
         .with_filtered_exe_suffix()
         .with_managed_python_dirs();
@@ -481,7 +547,7 @@ async fn python_install_io_error() {
 
 #[tokio::test]
 async fn install_http_retries() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let server = MockServer::start().await;
 
@@ -554,7 +620,7 @@ async fn install_http_retries() {
 
 #[tokio::test]
 async fn install_http_retry_low_level() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let server = MockServer::start().await;
 
@@ -589,7 +655,7 @@ async fn install_http_retry_low_level() {
 /// Test problem details with a 403 error containing license compliance information
 #[tokio::test]
 async fn rfc9457_problem_details_license_violation() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let server = MockServer::start().await;
 
@@ -637,7 +703,7 @@ async fn rfc9457_problem_details_license_violation() {
 /// Test that invalid proxy URL in uv.toml produces a helpful error message.
 #[tokio::test]
 async fn proxy_invalid_url_in_uv_toml() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let uv_toml = context.temp_dir.child("uv.toml");
     uv_toml
@@ -668,7 +734,7 @@ async fn proxy_invalid_url_in_uv_toml() {
 /// Test that invalid proxy URL (not a URL) in uv.toml produces a helpful error message.
 #[tokio::test]
 async fn proxy_invalid_url_not_a_url_in_uv_toml() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let uv_toml = context.temp_dir.child("uv.toml");
     uv_toml
@@ -697,10 +763,10 @@ async fn proxy_invalid_url_not_a_url_in_uv_toml() {
 }
 
 /// Test that valid proxy URL in uv.toml routes requests through the proxy.
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 #[tokio::test]
 async fn proxy_valid_url_in_uv_toml() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let target_server = MockServer::start().await;
     Mock::given(any())
@@ -756,10 +822,10 @@ async fn proxy_valid_url_in_uv_toml() {
 }
 
 /// Test that https-proxy in uv.toml routes HTTPS requests through a CONNECT tunnel proxy.
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 #[test]
 fn proxy_https_proxy_in_uv_toml() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let proxy_addr = start_connect_tunnel_proxy();
     let proxy_uri = format!("http://{proxy_addr}");
@@ -793,10 +859,10 @@ fn proxy_https_proxy_in_uv_toml() {
 }
 
 /// Test that no-proxy in uv.toml bypasses the proxy for specified hosts.
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 #[tokio::test]
 async fn proxy_no_proxy_in_uv_toml() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let target_server = MockServer::start().await;
     mock_simple_api(&target_server).await;
@@ -861,10 +927,10 @@ no-proxy = ["{target_host}"]
 }
 
 /// Test that proxy URLs without a scheme in uv.toml default to http://.
-#[cfg(feature = "pypi")]
+#[cfg(feature = "test-pypi")]
 #[tokio::test]
 async fn proxy_schemeless_url_in_uv_toml() {
-    let context = TestContext::new("3.12");
+    let context = uv_test::test_context!("3.12");
 
     let target_server = MockServer::start().await;
     Mock::given(any())
@@ -923,4 +989,126 @@ async fn proxy_schemeless_url_in_uv_toml() {
         !has_received_requests(&target_server).await,
         "Target should NOT have been called directly when proxy is configured"
     );
+}
+
+#[test]
+fn connect_timeout_index() {
+    let context = uv_test::test_context!("3.12");
+
+    // Create a server that never responds, causing a timeout for our requests.
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let server = listener.local_addr().unwrap().to_string();
+
+    let start = Instant::now();
+    uv_snapshot!(context.filters(), context
+        .pip_install()
+        .arg("tqdm")
+        .arg("--index-url")
+        .arg(format!("https://{server}"))
+        .env(EnvVars::UV_HTTP_CONNECT_TIMEOUT, "1")
+        .env(EnvVars::UV_HTTP_RETRIES, "0"), @"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: Failed to fetch: `https://[LOCALHOST]/tqdm/`
+      Caused by: error sending request for url (https://[LOCALHOST]/tqdm/)
+      Caused by: client error (Connect)
+      Caused by: operation timed out
+    ");
+
+    // Assumption: There's less than 2s overhead for this test and startup.
+    let elapsed = start.elapsed();
+    assert!(
+        elapsed < Duration::from_secs(3),
+        "Test with 1s connect timeout took too long"
+    );
+}
+
+#[test]
+fn connect_timeout_stream() {
+    let context = uv_test::test_context!("3.12");
+
+    // Create a server that never responds, causing a timeout for our requests.
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let server = listener.local_addr().unwrap().to_string();
+
+    let start = Instant::now();
+    uv_snapshot!(context.filters(), context
+        .pip_install()
+        .arg(format!("https://{server}/tqdm-0.1-py3-none-any.whl"))
+        .env(EnvVars::UV_HTTP_CONNECT_TIMEOUT, "1")
+        .env(EnvVars::UV_HTTP_RETRIES, "0"), @"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+      × Failed to download `tqdm @ https://[LOCALHOST]/tqdm-0.1-py3-none-any.whl`
+      ├─▶ Failed to fetch: `https://[LOCALHOST]/tqdm-0.1-py3-none-any.whl`
+      ├─▶ error sending request for url (https://[LOCALHOST]/tqdm-0.1-py3-none-any.whl)
+      ├─▶ client error (Connect)
+      ╰─▶ operation timed out
+    ");
+
+    // Assumption: There's less than 2s overhead for this test and startup.
+    let elapsed = start.elapsed();
+    assert!(
+        elapsed < Duration::from_secs(3),
+        "Test with 1s connect timeout took too long"
+    );
+}
+
+#[tokio::test]
+async fn retry_read_timeout_index() {
+    let context = uv_test::test_context!("3.12");
+
+    let (server, _guard) = read_timeout_server();
+
+    uv_snapshot!(context.filters(), context
+        .pip_install()
+        .arg("tqdm")
+        .arg("--index-url")
+        .arg(server)
+        // Speed the test up with the minimum testable values
+        .env(EnvVars::UV_HTTP_TIMEOUT, "1")
+        .env(EnvVars::UV_HTTP_RETRIES, "1"), @"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: Request failed after 1 retry
+      Caused by: Failed to fetch: `http://[LOCALHOST]/tqdm/`
+      Caused by: error decoding response body
+      Caused by: request or response body error
+      Caused by: operation timed out
+    ");
+}
+
+#[tokio::test]
+async fn retry_read_timeout_stream() {
+    let context = uv_test::test_context!("3.12");
+
+    let (server, _guard) = read_timeout_server();
+
+    uv_snapshot!(context.filters(), context
+        .pip_install()
+        .arg(format!("{server}/tqdm-0.1-py3-none-any.whl"))
+        // Speed the test up with the minimum testable values
+        .env(EnvVars::UV_HTTP_TIMEOUT, "1")
+        .env(EnvVars::UV_HTTP_RETRIES, "1"), @"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+      × Failed to download `tqdm @ http://[LOCALHOST]/tqdm-0.1-py3-none-any.whl`
+      ├─▶ Request failed after 1 retry
+      ├─▶ Failed to read metadata: `http://[LOCALHOST]/tqdm-0.1-py3-none-any.whl`
+      ├─▶ Failed to read from zip file
+      ├─▶ an upstream reader returned an error: Failed to download distribution due to network timeout. Try increasing UV_HTTP_TIMEOUT (current value: [TIME]).
+      ╰─▶ Failed to download distribution due to network timeout. Try increasing UV_HTTP_TIMEOUT (current value: [TIME]).
+    ");
 }

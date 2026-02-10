@@ -42,9 +42,9 @@ jobs:
       - name: "Install Rust toolchain"
         run: rustup show
 
-      - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+      - uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41 # v7.2.1
         with:
-          version: "0.9.26"
+          version: "0.9.28"
 
       - name: "Install required Python versions"
         run: uv python install
@@ -73,7 +73,7 @@ jobs:
         run: |
           cargo nextest run \
             --cargo-profile fast-build \
-            --features python-patch,native-auth,secret-service \
+            --features test-python-patch,native-auth,secret-service \
             --workspace \
             --profile ci-linux
 
@@ -97,9 +97,9 @@ jobs:
       - name: "Install Rust toolchain"
         run: rustup show
 
-      - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+      - uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41 # v7.2.1
         with:
-          version: "0.9.26"
+          version: "0.9.28"
 
       - name: "Install required Python versions"
         run: uv python install
@@ -118,7 +118,7 @@ jobs:
           cargo nextest run \
             --cargo-profile fast-build \
             --no-default-features \
-            --features python,python-managed,pypi,git,git-lfs,performance,crates-io,native-auth,apple-native \
+            --features test-python,test-python-managed,test-pypi,test-git,test-git-lfs,performance,test-crates-io,native-auth,apple-native \
             --workspace \
             --profile ci-macos
 
@@ -143,9 +143,9 @@ jobs:
         run: |
           Copy-Item -Path "${{ github.workspace }}" -Destination "$Env:UV_WORKSPACE" -Recurse
 
-      - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+      - uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41 # v7.2.1
         with:
-          version: "0.9.26"
+          version: "0.9.28"
 
       - name: "Install required Python versions"
         run: uv python install
@@ -180,7 +180,7 @@ jobs:
           cargo nextest run \
             --cargo-profile fast-build \
             --no-default-features \
-            --features python,pypi,python-managed,native-auth,windows-native \
+            --features test-python,test-pypi,test-python-managed,native-auth,windows-native \
             --workspace \
             --profile ci-windows \
             --partition hash:${{ matrix.partition }}/3

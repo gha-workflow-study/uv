@@ -260,7 +260,6 @@ impl PythonInstallation {
             reporter,
             python_install_mirror,
             pypy_install_mirror,
-            preview,
         )
         .await?;
 
@@ -278,7 +277,6 @@ impl PythonInstallation {
         reporter: Option<&dyn Reporter>,
         python_install_mirror: Option<&str>,
         pypy_install_mirror: Option<&str>,
-        preview: Preview,
     ) -> Result<Self, Error> {
         let installations = ManagedPythonInstallations::from_settings(None)?.init()?;
         let installations_dir = installations.root();
@@ -321,7 +319,7 @@ impl PythonInstallation {
             .patch()
             .is_some_and(|p| p >= highest_patch)
         {
-            installed.ensure_minor_version_link(preview)?;
+            installed.ensure_minor_version_link()?;
         }
 
         if let Err(e) = installed.ensure_dylib_patched() {
@@ -585,7 +583,8 @@ impl PythonInstallationKey {
     /// Return a canonical name for a minor versioned executable.
     pub fn executable_name_minor(&self) -> String {
         format!(
-            "python{maj}.{min}{var}{exe}",
+            "{name}{maj}.{min}{var}{exe}",
+            name = self.implementation().executable_install_name(),
             maj = self.major,
             min = self.minor,
             var = self.variant.executable_suffix(),
@@ -596,7 +595,8 @@ impl PythonInstallationKey {
     /// Return a canonical name for a major versioned executable.
     pub fn executable_name_major(&self) -> String {
         format!(
-            "python{maj}{var}{exe}",
+            "{name}{maj}{var}{exe}",
+            name = self.implementation().executable_install_name(),
             maj = self.major,
             var = self.variant.executable_suffix(),
             exe = std::env::consts::EXE_SUFFIX
@@ -606,7 +606,8 @@ impl PythonInstallationKey {
     /// Return a canonical name for an un-versioned executable.
     pub fn executable_name(&self) -> String {
         format!(
-            "python{var}{exe}",
+            "{name}{var}{exe}",
+            name = self.implementation().executable_install_name(),
             var = self.variant.executable_suffix(),
             exe = std::env::consts::EXE_SUFFIX
         )
