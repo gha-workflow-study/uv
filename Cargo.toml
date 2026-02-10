@@ -60,6 +60,7 @@ uv-redacted = { version = "0.0.20", path = "crates/uv-redacted" }
 uv-requirements = { version = "0.0.20", path = "crates/uv-requirements" }
 uv-requirements-txt = { version = "0.0.20", path = "crates/uv-requirements-txt" }
 uv-resolver = { version = "0.0.20", path = "crates/uv-resolver" }
+uv-sandbox = { version = "0.0.20", path = "crates/uv-sandbox" }
 uv-scripts = { version = "0.0.20", path = "crates/uv-scripts" }
 uv-settings = { version = "0.0.20", path = "crates/uv-settings" }
 uv-shell = { version = "0.0.20", path = "crates/uv-shell" }

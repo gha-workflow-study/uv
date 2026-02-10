@@ -23,6 +23,8 @@ use uv_torch::TorchMode;
 use uv_workspace::pyproject::ExtraBuildDependencies;
 use uv_workspace::pyproject_mut::AddBoundsKind;
 
+use uv_sandbox::SandboxOptions;
+
 use crate::{FilesystemOptions, Options, PipOptions};
 
 pub trait Combine {
@@ -113,6 +115,27 @@ impl_combine_or!(TargetTriple);
 impl_combine_or!(TorchMode);
 impl_combine_or!(TrustedPublishing);
 impl_combine_or!(Url);
+impl Combine for Option<SandboxOptions> {
+    /// Combine two sandbox options, preferring `self` for each field.
+    fn combine(self, other: Self) -> Self {
+        match (self, other) {
+            (Some(a), Some(b)) => Some(SandboxOptions {
+                allow_read: a.allow_read.or(b.allow_read),
+                deny_read: a.deny_read.or(b.deny_read),
+                allow_write: a.allow_write.or(b.allow_write),
+                deny_write: a.deny_write.or(b.deny_write),
+                allow_execute: a.allow_execute.or(b.allow_execute),
+                deny_execute: a.deny_execute.or(b.deny_execute),
+                allow_net: a.allow_net.or(b.allow_net),
+                deny_net: a.deny_net.or(b.deny_net),
+                allow_env: a.allow_env.or(b.allow_env),
+                deny_env: a.deny_env.or(b.deny_env),
+                required: a.required.or(b.required),
+            }),
+            (a, b) => a.or(b),
+        }
+    }
+}
 impl_combine_or!(bool);
 
 impl<T> Combine for Option<Vec<T>> {

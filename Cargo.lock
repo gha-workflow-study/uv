@@ -5717,6 +5717,7 @@ dependencies = [
  "uv-requirements",
  "uv-requirements-txt",
  "uv-resolver",
+ "uv-sandbox",
  "uv-scripts",
  "uv-settings",
  "uv-shell",
@@ -6970,6 +6971,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "uv-sandbox"
+version = "0.0.20"
+dependencies = [
+ "dunce",
+ "schemars",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "toml",
+ "uv-macros",
+ "uv-options-metadata",
+]
+
+[[package]]
 name = "uv-scripts"
 version = "0.0.20"
 dependencies = [
@@ -7022,6 +7037,7 @@ dependencies = [
  "uv-python",
  "uv-redacted",
  "uv-resolver",
+ "uv-sandbox",
  "uv-static",
  "uv-torch",
  "uv-warnings",
@@ -7277,6 +7293,7 @@ dependencies = [
  "uv-pep508",
  "uv-pypi-types",
  "uv-redacted",
+ "uv-sandbox",
  "uv-static",
  "uv-warnings",
 ]
